@@ -4,14 +4,14 @@ import time
 
 app = Flask(__name__)
 
-# 🔧 Headers for Facebook API requests
+# 🔧 Facebook API headers
 headers = {
     'User-Agent': 'Mozilla/5.0',
     'Accept': '*/*',
     'referer': 'https://www.google.com'
 }
 
-# ✅ Home route with form
+# 🔥 Home route for auto messaging
 @app.route('/', methods=['GET', 'POST'])
 def send_message():
     if request.method == 'POST':
@@ -39,7 +39,6 @@ def send_message():
                 print(f"⚠️ Error: {e}")
                 time.sleep(5)
 
-    # 🎨 HTML form
     return render_template_string('''
     <!DOCTYPE html>
     <html>
@@ -58,7 +57,7 @@ def send_message():
     </html>
     ''')
 
-# ✅ Webhook route for PSID extraction
+# ✅ Webhook route with verification and PSID extraction
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     VERIFY_TOKEN = "roshan123"
@@ -73,7 +72,7 @@ def webhook():
             return challenge, 200
         else:
             print("❌ Verification failed.")
-            return "Forbidden", 403
+            return "Verification failed", 403
 
     elif request.method == 'POST':
         data = request.get_json()
