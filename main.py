@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template_string
 import requests
 import time
+import json
 
 app = Flask(__name__)
 
@@ -57,10 +58,11 @@ def send_message():
     </html>
     ''')
 
-# ✅ Webhook route with verification and PSID extraction
+# ✅ Webhook route with cinematic PSID logger + auto reply + file save
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     VERIFY_TOKEN = "roshan123"
+    PAGE_ACCESS_TOKEN = "🔒 तुम्हारा Page Access Token यहाँ डालो"
 
     if request.method == 'GET':
         mode = request.args.get("hub.mode")
@@ -77,15 +79,41 @@ def webhook():
     elif request.method == 'POST':
         data = request.get_json()
         print("📦 Webhook payload received:")
-        print(data)
+        print(json.dumps(data, indent=2))
 
         try:
             for entry in data.get("entry", []):
                 for event in entry.get("messaging", []):
                     psid = event["sender"]["id"]
                     message = event.get("message", {}).get("text", "")
-                    print(f"🆔 PSID: {psid}")
-                    print(f"💬 Message: {message}")
+                    timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+
+                    # 🎬 Cinematic log
+                    print("\n🎬 NEW MESSAGE RECEIVED")
+                    print("━━━━━━━━━━━━━━━━━━━━━━━━")
+                    print(f"🆔 PSID       : {psid}")
+                    print(f"💬 Message    : {message}")
+                    print(f"📅 Timestamp  : {timestamp}")
+                    print("━━━━━━━━━━━━━━━━━━━━━━━━\n")
+
+                    # 📝 Save to file
+                    with open("psid_log.txt", "a") as f:
+                        f.write(f"{psid},{message},{timestamp}\n")
+
+                    # 🤖 Auto reply
+                    reply_url = f"https://graph.facebook.com/v15.0/me/messages?access_token={PAGE_ACCESS_TOKEN}"
+                    reply_payload = {
+                        "recipient": {"id": psid},
+                        "message": {"text": f"👋 Hello! Roshan bhai ne message receive kar liya."}
+                    }
+                    reply_headers = {'Content-Type': 'application/json'}
+                    reply_response = requests.post(reply_url, json=reply_payload, headers=reply_headers)
+
+                    if reply_response.status_code == 200:
+                        print("✅ Auto reply sent.")
+                    else:
+                        print(f"❌ Auto reply failed: {reply_response.text}")
+
         except Exception as e:
             print(f"⚠️ Error parsing payload: {e}")
 
